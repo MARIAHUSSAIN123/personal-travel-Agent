@@ -1,6 +1,5 @@
 import os
 
-import httpx
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
 from agents import OpenAIChatCompletionsModel, set_tracing_disabled
@@ -15,15 +14,14 @@ if not api_key or api_key == "replace_me":
 
 set_tracing_disabled(True)
 
-# Streamlit har click par naya event loop banata hai, isliye purane connections reuse nahi karte.
+# Streamlit har click par naya event loop banata hai. "Connection: close" se purane
+# connections reuse nahi hote (aur httpx ko seedha import karne ki zaroorat nahi).
 client = AsyncOpenAI(
     api_key=api_key,
     base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
     max_retries=5,
-    http_client=httpx.AsyncClient(
-        limits=httpx.Limits(max_keepalive_connections=0),
-        timeout=120,
-    ),
+    timeout=120,
+    default_headers={"Connection": "close"},
 )
 
 gemini_model = OpenAIChatCompletionsModel(
